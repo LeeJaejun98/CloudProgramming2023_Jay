@@ -10,3 +10,5 @@ class Post(models.Model):
     def __str__(self):  #java로 따지면 toString()
         return f'[{self.pk}]{self.title}'
 
+    def get_absolute_url(self):
+        return f'/blog/{self.pk}/'
