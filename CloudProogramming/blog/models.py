@@ -14,6 +14,7 @@ class Tag(models.Model):
     def get_absolute_url(self):
         return f'/blog/tag/{self.slug}/'
 
+
 class Category(models.Model):
     name = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(max_length=200, unique=True, allow_unicode=True)
@@ -37,9 +38,9 @@ class Post(models.Model):
     create_at = models.DateTimeField(auto_now_add=True)  # record 추가할시 시간 수정
     updated_at = models.DateTimeField(auto_now=True)
 
-    author = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    author = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.SET_NULL)
-    tags = models.ManyToManyField(Tag, blank=True)
+    tag = models.ManyToManyField(Tag, blank=True)
 
     # ondelete -> 만약에 사용자가 삭제되면 어떻게 할것인가?
     # CASCADE -> 연결 되어 있는 Post 레코드까지 삭제

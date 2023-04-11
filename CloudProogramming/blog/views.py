@@ -1,6 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from .models import Post, Category, Tag
-from django.views.generic import ListView, DetailView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
 
 
 # 정적 렌더링
@@ -9,6 +10,43 @@ from django.views.generic import ListView, DetailView
 #  return render(request, 'blog/post_list.html',
 #                 {'posts': posts})
 #   -> class based view 만들기 때문에 필요없음
+
+class PostUpdate(LoginRequiredMixin, UpdateView):
+    model = Post
+    fields = ['title', 'content', 'head_image', 'file_upload', 'category', 'tag']
+
+    template_name = 'blog/post_update.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and self.get_object().author == request.user:
+            return super(PostUpdate, self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionError
+
+
+class PostCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):       # 사용자에게 정보를 받아오는 페이지 + 페이지에 들어있는 홈의 정보 가져오기
+    model = Post
+    fields = ['title', 'content', 'head_image', 'file_upload', 'category', 'tag']  # 7개만 받기
+
+    def test_func(self):
+        return self.request.is_superuser or self.request.is_staff
+
+    def get_context_data(self, **kwargs):
+        context = super(PostCreate, self).get_context_data()
+        context['categories'] = Category.objects.all()
+        context['no_category_count'] = Post.objects.filter(category=None).count()
+
+        return context
+
+    def form_valid(self, form):
+        current_user = self.request.user
+        if current_user.is_authenticated and (current_user.is_staff or current_user.is_superuser):
+            form.instance.author = current_user
+            return super(PostCreate, self).form_valid(form)
+        else:
+            return redirect('/blog/')
+
+
 class PostList(ListView):
     model = Post
     ordering = '-pk'  # 내림차순으로 정렬해주기 위해
@@ -69,4 +107,4 @@ def tag_page(request, slug):
         'no_category_count': Post.objects.filter(category=None).count()
 
     }
-    return render(request, 'blog/post_list.html', context)
+    return render(request, 'blog/post_list.html', context)  # function based view
