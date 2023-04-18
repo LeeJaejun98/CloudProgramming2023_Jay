@@ -29,7 +29,7 @@ class PostCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):       # �
     fields = ['title', 'content', 'head_image', 'file_upload', 'category', 'tag']  # 7개만 받기
 
     def test_func(self):
-        return self.request.is_superuser or self.request.is_staff
+        return self.request.user.is_superuser or self.user.request.is_staff
 
     def get_context_data(self, **kwargs):
         context = super(PostCreate, self).get_context_data()
