@@ -3,6 +3,8 @@ from .models import Post, Category, Tag
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 
+from .forms import CommentForm
+
 
 # 정적 렌더링
 # def index(request):
@@ -24,7 +26,7 @@ class PostUpdate(LoginRequiredMixin, UpdateView):
             raise PermissionError
 
 
-class PostCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):       # 사용자에게 정보를 받아오는 페이지 + 페이지에 들어있는 홈의 정보 가져오기
+class PostCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):  # 사용자에게 정보를 받아오는 페이지 + 페이지에 들어있는 홈의 정보 가져오기
     model = Post
     fields = ['title', 'content', 'head_image', 'file_upload', 'category', 'tag']  # 7개만 받기
 
@@ -74,7 +76,7 @@ class PostDetail(DetailView):
         context = super(PostDetail, self).get_context_data()
         context['categories'] = Category.objects.all()
         context['no_category_count'] = Post.objects.filter(category=None).count()
-
+        context['comment_form'] = CommentForm
         return context
 
 
@@ -108,3 +110,20 @@ def tag_page(request, slug):
 
     }
     return render(request, 'blog/post_list.html', context)  # function based view
+
+
+def add_comment(request, pk):
+    if not request.user.is_authenticated:
+        raise PermissionError
+
+    if request.method == 'POST':
+        post = Post.objects.get(pk=pk)
+        comment_form = CommentForm(request.POST)
+        comment_temp = comment_form.save(commit=False) #바로 DB로 가는것을 막기 위해 commit 사용
+        comment_temp.post = post
+        comment_temp.author = request.user
+        comment_temp.save()
+
+        return redirect(post.get_absolute_url())
+    else:
+        raise PermissionError
