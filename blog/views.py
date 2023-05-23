@@ -26,12 +26,12 @@ class PostUpdate(LoginRequiredMixin, UpdateView):
             raise PermissionError
 
 
-class PostCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):  # 사용자에게 정보를 받아오는 페이지 + 페이지에 들어있는 홈의 정보 가져오기
+class PostCreate(LoginRequiredMixin, CreateView):  # 사용자에게 정보를 받아오는 페이지 + 페이지에 들어있는 홈의 정보 가져오기
     model = Post
     fields = ['title', 'content', 'head_image', 'file_upload', 'category', 'tag']  # 7개만 받기
 
-    def test_func(self):
-        return self.request.user.is_superuser or self.user.request.is_staff
+    # def test_func(self):
+    #     return self.request.user.is_superuser or self.user.request.is_staff
 
     def get_context_data(self, **kwargs):
         context = super(PostCreate, self).get_context_data()
@@ -42,7 +42,7 @@ class PostCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):  # 사용
 
     def form_valid(self, form):
         current_user = self.request.user
-        if current_user.is_authenticated and (current_user.is_staff or current_user.is_superuser):
+        if current_user.is_authenticated:
             form.instance.author = current_user
             return super(PostCreate, self).form_valid(form)
         else:
